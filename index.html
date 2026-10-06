@@ -64,7 +64,7 @@ dialog{border:0;border-radius:18px;width:min(700px,calc(100% - 24px));padding:0;
     <div class="full"><label>メールアドレス</label><input id="email" type="email" autocomplete="email"></div>
     <div class="full"><label>パスワード</label><input id="password" type="password" autocomplete="current-password"></div>
   </div>
-  <div class="actions"><button id="signIn">ログイン</button><button id="signUp" class="secondary">新規登録</button></div>
+  <div class="actions"><button id="signIn">ログイン</button><button id="signUp" type="button" class="secondary" onclick="auth('up')">新規登録</button></div>
   <p id="authMsg" class="small"></p>
   <details style="margin-top:14px"><summary>Supabase接続設定</summary>
     <p class="small">このHTMLを自分のSupabaseプロジェクトで使う場合、下の設定を入力して保存してください。anon keyのみを使い、service_role keyは絶対に入力しないでください。</p>
