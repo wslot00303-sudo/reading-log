@@ -121,6 +121,14 @@ const DEFAULT_PUBLISHABLE_KEY="sb_publishable_xIkXTxAFhrhqDOfLNf6MSQ_LsL45HN7";
 const ISBN_FUNCTION_URL="https://zrntdqslhkrfpbuvlbnd.supabase.co/functions/v1/isbn-lookup";
 let supabase=null, user=null, books=[], editingId=null, photoBlob=null;
 const $=id=>document.getElementById(id);
+
+function setMsg(id,msg,ok=false){
+  const el=$(id);
+  if(!el)return;
+  el.textContent=msg;
+  el.className="small "+(ok?"ok":"err");
+}
+
 function connect(){
   const c=cfg();
   if(!c.url||!c.key) return false;
