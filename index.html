@@ -30,7 +30,82 @@ function cfg(){try{const x=JSON.parse(localStorage.getItem(CONFIG_KEY)||"{}");re
 function connect(){try{const c=cfg();if(!window.supabase?.createClient||!c.url||!c.key)return false;supabaseClient=window.supabase.createClient(c.url,c.key);return true}catch(e){console.error(e);supabaseClient=null;return false}}
 function showAuth(){$("authView").classList.remove("hidden");$("appView").classList.add("hidden");$("settingsBtn").classList.add("hidden");$("logoutBtn").classList.add("hidden");$("userLabel").textContent=""}
 async function showApp(){$("authView").classList.add("hidden");$("appView").classList.remove("hidden");$("settingsBtn").classList.remove("hidden");$("logoutBtn").classList.remove("hidden");$("userLabel").textContent=currentUser?.email||"";await loadBooks()}
-async function auth(mode){try{if(!connect())return setMsg("authMsg","Supabaseに接続できません。ページを再読み込みしてください。");const email=$("email").value.trim(),password=$("password").value;if(!email)return setMsg("authMsg","メールアドレスを入力してください。");if(password.length<6)return setMsg("authMsg","パスワードは6文字以上にしてください。");setMsg("authMsg",mode==="up"?"登録処理中...":"ログイン処理中...",true);const r=mode==="up"?await supabaseClient.auth.signUp({email,password}):await supabaseClient.auth.signInWithPassword({email,password});if(r.error)return setMsg("authMsg",r.error.message);if(mode==="up")return setMsg("authMsg",r.data.session?"登録しました。ログイン状態です。":"登録しました。確認メールが届く設定なら、メール内の確認リンクを開いてください。",true);setMsg("authMsg","ログインしました。",true)}catch(e){console.error(e);setMsg("authMsg","エラー: "+(e?.message||String(e)))}}
+async function auth(mode){
+  try{
+    if(!connect()){
+      return setMsg("authMsg","Supabaseに接続できません。ページを再読み込みしてください。");
+    }
+
+    const email=$("email").value.trim();
+    const password=$("password").value;
+
+    if(!email){
+      return setMsg("authMsg","メールアドレスを入力してください。");
+    }
+
+    if(password.length<6){
+      return setMsg("authMsg","パスワードは6文字以上にしてください。");
+    }
+
+    const btn=mode==="up"?$("signUp"):$("signIn");
+    btn.disabled=true;
+
+    setMsg(
+      "authMsg",
+      mode==="up"?"登録処理中...":"ログイン処理中...",
+      true
+    );
+
+    const r=mode==="up"
+      ?await supabaseClient.auth.signUp({email,password})
+      :await supabaseClient.auth.signInWithPassword({email,password});
+
+    if(r.error){
+      console.error("Auth error",r.error);
+      return setMsg(
+        "authMsg",
+        r.error.message||"認証に失敗しました。"
+      );
+    }
+
+    if(mode==="up"){
+      if(r.data.session){
+        currentUser=r.data.user;
+        await showApp();
+        return;
+      }
+
+      return setMsg(
+        "authMsg",
+        "登録しました。確認メールが届く設定なら、メール内の確認リンクを開いてください。",
+        true
+      );
+    }
+
+    currentUser=r.data.user||r.data.session?.user||null;
+
+    if(currentUser){
+      await showApp();
+      setMsg("authMsg","ログインしました。",true);
+    }else{
+      setMsg(
+        "authMsg",
+        "ログイン結果を確認できませんでした。ページを再読み込みしてください。"
+      );
+    }
+
+  }catch(e){
+    console.error("Auth exception",e);
+    setMsg(
+      "authMsg",
+      "エラー: "+(e?.message||String(e))
+    );
+  }finally{
+    $("signIn").disabled=false;
+    $("signUp").disabled=false;
+  }
+}
+  }
 function saveConfig(){const url=$("projectUrl").value.trim(),key=$("anonKey").value.trim();if(!url||!key)return setMsg("authMsg","Project URLとPublishable / anon keyを入力してください。");localStorage.setItem(CONFIG_KEY,JSON.stringify({url,key}));setMsg("authMsg",connect()?"接続設定を保存しました。":"接続設定を確認してください。",!!supabaseClient)}
 async function loadBooks(){if(!supabaseClient||!currentUser)return;const r=await supabaseClient.from("books").select("*").order("created_at",{ascending:false});if(r.error)return setMsg("saveMsg","本棚の取得に失敗: "+r.error.message);books=r.data||[];render()}
 function norm(v){return String(v??"").toLocaleLowerCase("ja-JP")}
